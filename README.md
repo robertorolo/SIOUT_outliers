@@ -4,4 +4,4 @@ Abre uma janela para que seja selecionado um extrato do SIOUT.
 
 Plota um boxplot interativo de vazões captadas por mês e salva um relatório com os outliers.
 
-![boxplots](newplot.PNG)
+![boxplots](newplot.png)
