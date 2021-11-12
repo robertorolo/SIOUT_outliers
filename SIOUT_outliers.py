@@ -60,6 +60,9 @@ class Ui_Dialog(object):
         dff = self.df[self.df['Bacia Hidrográfica'] == bacia]
         vazoes = dff[['Vazão janeiro', 'Vazão fevereiro', 'Vazão março', 'Vazão abril', 'Vazão maio', 'Vazão junho', 'Vazão julho', 'Vazão agosto', 'Vazão setembro', 'Vazão outubro', 'Vazão novembro', 'Vazão dezembro']].values
         num = dff['Número do cadastro'].values
+        stat = dff['Status'].values
+        num_stat = ['{} - {}'.format(i,j) for i,j in zip(num, stat)]
+
         un = dff['Unidade de medida da vazão'].values
         
         vazoes_mes = []
@@ -72,7 +75,7 @@ class Ui_Dialog(object):
         
         fig = go.Figure()
         for v, m in zip(vazoes_mes, tick_label):
-            fig.add_trace(go.Box(y=v, name=m, hovertext=num, boxpoints='all'))
+            fig.add_trace(go.Box(y=v, name=m, hovertext=num_stat, boxpoints='all'))
         
         fig.update_yaxes(title='Vazão (m³/s)')
         fig.update_layout(title={'text': '{} - {} Processos'.format(bacia, len(dff))})
