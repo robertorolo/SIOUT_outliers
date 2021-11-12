@@ -15,40 +15,46 @@ import numpy as np
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(700, 150)
+        Dialog.resize(534, 133)
         self.gridLayout = QtWidgets.QGridLayout(Dialog)
         self.gridLayout.setObjectName("gridLayout")
-        self.label_2 = QtWidgets.QLabel(Dialog)
-        self.label_2.setObjectName("label_2")
-        self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
-        self.pushButton = QtWidgets.QPushButton(Dialog)
-        self.pushButton.setObjectName("pushButton")
-        self.gridLayout.addWidget(self.pushButton, 0, 1, 1, 1)
         self.comboBox = QtWidgets.QComboBox(Dialog)
         self.comboBox.setObjectName("comboBox")
         self.gridLayout.addWidget(self.comboBox, 1, 1, 1, 1)
+        self.pushButton = QtWidgets.QPushButton(Dialog)
+        self.pushButton.setObjectName("pushButton")
+        self.gridLayout.addWidget(self.pushButton, 0, 1, 1, 1)
         self.pushButton_2 = QtWidgets.QPushButton(Dialog)
         self.pushButton_2.setObjectName("pushButton_2")
         self.gridLayout.addWidget(self.pushButton_2, 2, 1, 1, 1)
+        self.label_2 = QtWidgets.QLabel(Dialog)
+        self.label_2.setObjectName("label_2")
+        self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
+        self.pushButton_3 = QtWidgets.QPushButton(Dialog)
+        self.pushButton_3.setObjectName("pushButton_3")
+        self.gridLayout.addWidget(self.pushButton_3, 3, 1, 1, 1)
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "SIOUT outliers"))
-        self.label_2.setText(_translate("Dialog", "Selecionar bacia"))
+        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
         self.pushButton.setText(_translate("Dialog", "Carregar extrato do SIOUT"))
         self.pushButton_2.setText(_translate("Dialog", "Mostrar boxplots"))
+        self.label_2.setText(_translate("Dialog", "Selecionar bacia"))
+        self.pushButton_3.setText(_translate("Dialog", "Exportar outliers em csv"))
         
         self.pushButton.clicked.connect(self.carregar)
         self.pushButton_2.clicked.connect(self.plotar)
+        self.pushButton_3.clicked.connect(self.exportar)
 
     def carregar(self):
         file_path = QtWidgets.QFileDialog.getOpenFileName(None, "Select short term campaing file", "", "CSV files (*.csv)")
         file_path = file_path[0]
         df = pd.read_csv(filepath_or_buffer=file_path, sep=';', encoding= 'unicode-escape', error_bad_lines=False)
         bacias = list(df['Bacia Hidrográfica'].unique())
+        self.bacias = bacias
         for idx, i in enumerate(bacias):
             if not isinstance(i, str):
                 del bacias[idx]
@@ -81,7 +87,29 @@ class Ui_Dialog(object):
         fig.update_layout(title={'text': '{} - {} Processos'.format(bacia, len(dff))})
 
         fig.show()
-
+        
+    def exportar(self):
+        #outdf = pd.DataFrame(columns=['Número do cadastro', 'Status', 'Bacia Hidrográfica'])
+        dataframes = []
+        for b in self.bacias:
+            for m in ['Vazão janeiro', 'Vazão fevereiro', 'Vazão março', 'Vazão abril', 'Vazão maio', 'Vazão junho', 'Vazão julho', 'Vazão agosto', 'Vazão setembro', 'Vazão outubro', 'Vazão novembro', 'Vazão dezembro']:
+                dff = self.df[self.df['Bacia Hidrográfica'] == b]
+                x = dff[m].values
+                x = np.array([float(i.replace(',','.')) for i in x])
+                upper_quartile = np.percentile(x, 75)
+                lower_quartile = np.percentile(x, 25)
+                IQR = (upper_quartile - lower_quartile) * 1.5
+                quartileSet = (lower_quartile - IQR, upper_quartile + IQR)
+                f =  x > quartileSet[1]
+                
+                dfconcat = dff[f][['Número do cadastro', 'Status', 'Bacia Hidrográfica']]
+                dataframes.append(dfconcat)
+        
+        outdf = pd.concat(dataframes)
+        outdf = outdf.drop_duplicates()
+        outdf.to_csv('outliers.csv', index=False)
+        print('Arquivo exportado para a pasta do programa')
+        
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
